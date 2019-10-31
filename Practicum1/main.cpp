@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 
-static const int INF = INT_MAX;
+static const int INF = INT_MAX / 2;
 
 class RegularExpressionException: public std::logic_error {
 public:
@@ -23,28 +23,34 @@ std::pair<T, T> pop2last(std::stack<T>& stack) {
     return { b, a };
 }
 
-// argv[1] = regular expression in reverse polish notation, argv[2] = char 
-int main(int argc, char *argv[]) {
-    std::string regularExpression = argv[1];
-    char c = *argv[2];
+int main() {
+    std::string regularExpression;
+    char c;
+
+    std::cin >> regularExpression >> c;
+
     int n = regularExpression.length();
 
-    std::stack<int> min_length, max_suffix_length;
-    std::stack<bool> is_only_char;
+    std::stack<int> min_length;
+    std::stack<int> max_suffix_length;
+    std::stack<bool> is_only_char; // true, if exist word, which |w| != 0 and is consists of only c
 
     for (size_t i = 0; i < n; ++i) {
         if (regularExpression[i] == '.') {
             auto pair_min_len = pop2last<int>(min_length);
             auto pair_max_suffix = pop2last<int>(max_suffix_length);
             auto pair_is_only_char = pop2last<bool>(is_only_char);
-
-            if (pair_min_len.second == 0 && pair_max_suffix.first > pair_max_suffix.second) {
+            if (pair_is_only_char.second) {
+                max_suffix_length.push(std::min(pair_max_suffix.first + pair_max_suffix.second, INF));
+            } else if (pair_min_len.second == 0 && pair_max_suffix.first > pair_max_suffix.second) {
                 max_suffix_length.push(pair_max_suffix.first);
             } else {
                 max_suffix_length.push(pair_max_suffix.second);
             }
 
-            is_only_char.push(pair_is_only_char.first && pair_is_only_char.second);
+            is_only_char.push((pair_is_only_char.first && pair_is_only_char.second)
+                           || (!pair_min_len.first && pair_min_len.second && pair_is_only_char.second)
+                           || (pair_min_len.first && !pair_min_len.second && pair_is_only_char.first));
             min_length.push(pair_min_len.first + pair_min_len.second);
         } else if (regularExpression[i] == '+') {
             auto pair_min_len = pop2last<int>(min_length);
@@ -90,9 +96,15 @@ int main(int argc, char *argv[]) {
             is_only_char.push(false);
         }
     }
+
     if (max_suffix_length.size() != 1) {
         throw RegularExpressionException();
     }
-    std::cout << max_suffix_length.top() << std::endl;
+
+    if (max_suffix_length.top() == INF) {
+        std::cout << "inf" << std::endl;
+    } else {
+        std::cout << max_suffix_length.top() << std::endl;
+    }
     return 0;
 }
