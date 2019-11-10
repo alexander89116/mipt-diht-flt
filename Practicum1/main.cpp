@@ -33,33 +33,46 @@ int main() {
 
     std::stack<int> min_length;
     std::stack<int> max_suffix_length;
-    std::stack<bool> is_only_char; // true, if exist word, which |w| != 0 and is consists of only c
+    std::stack<int> is_only_char; // max length, if exist word, which |w| != 0 and is consists of only c
 
     for (size_t i = 0; i < n; ++i) {
         if (regularExpression[i] == '.') {
             auto pair_min_len = pop2last<int>(min_length);
             auto pair_max_suffix = pop2last<int>(max_suffix_length);
-            auto pair_is_only_char = pop2last<bool>(is_only_char);
-            if (pair_is_only_char.second) {
-                max_suffix_length.push(std::min(pair_max_suffix.first + pair_max_suffix.second, INF));
-            } else if (pair_min_len.second == 0 && pair_max_suffix.first > pair_max_suffix.second) {
-                max_suffix_length.push(pair_max_suffix.first);
+            auto pair_is_only_char = pop2last<int>(is_only_char);
+            
+            int max_suffix_candidate = 0, is_only_char_candidate = 0;
+            
+            if (pair_is_only_char.second != 0) {
+                max_suffix_candidate = std::max(max_suffix_candidate, pair_max_suffix.first + pair_is_only_char.second);
+            }
+            if (pair_min_len.second == 0 && pair_max_suffix.first > pair_max_suffix.second) {
+                max_suffix_candidate = std::max(max_suffix_candidate, pair_max_suffix.first);
             } else {
-                max_suffix_length.push(pair_max_suffix.second);
+                max_suffix_candidate = std::max(max_suffix_candidate, pair_max_suffix.second);
+            }
+            
+            if (pair_is_only_char.first && pair_is_only_char.second) {
+                is_only_char_candidate = std::max(is_only_char_candidate, pair_is_only_char.first + pair_is_only_char.second);
+            }
+            if (!pair_min_len.first && pair_min_len.second) {
+                is_only_char_candidate = std::max(is_only_char_candidate, pair_is_only_char.second);
+            }
+            if (pair_min_len.first && !pair_min_len.second) {
+                is_only_char_candidate = std::max(is_only_char_candidate, pair_is_only_char.first);
             }
 
-            is_only_char.push((pair_is_only_char.first && pair_is_only_char.second)
-                           || (!pair_min_len.first && pair_min_len.second && pair_is_only_char.second)
-                           || (pair_min_len.first && !pair_min_len.second && pair_is_only_char.first));
+            max_suffix_length.push(std::min(max_suffix_candidate, INF));
+            is_only_char.push(std::min(is_only_char_candidate, INF));
             min_length.push(pair_min_len.first + pair_min_len.second);
         } else if (regularExpression[i] == '+') {
             auto pair_min_len = pop2last<int>(min_length);
             auto pair_max_suffix = pop2last<int>(max_suffix_length);
-            auto pair_is_only_char = pop2last<bool>(is_only_char);
+            auto pair_is_only_char = pop2last<int>(is_only_char);
 
             max_suffix_length.push(std::max(pair_max_suffix.first, pair_max_suffix.second));
             min_length.push(std::min(pair_min_len.first, pair_min_len.second));
-            is_only_char.push(pair_is_only_char.first || pair_is_only_char.second);
+            is_only_char.push(std::max(pair_is_only_char.first, pair_is_only_char.second));
         
         } else if (regularExpression[i] == '*') {
             if (is_only_char.empty() || min_length.empty() || max_suffix_length.empty()) {
@@ -77,23 +90,23 @@ int main() {
 
             if (last_regular_subexpression_is_only_char) {
                 max_suffix_length.push(INF);
-                is_only_char.push(true);
+                is_only_char.push(INF);
             } else {
                 max_suffix_length.push(last_regular_subexpression_max_suffix);
-                is_only_char.push(false);
+                is_only_char.push(0);
             }
         } else if (regularExpression[i] == '1') {
             max_suffix_length.push(0);
             min_length.push(0);
-            is_only_char.push(false);
+            is_only_char.push(0);
         } else if (regularExpression[i] == c) {
             max_suffix_length.push(1);
             min_length.push(1);
-            is_only_char.push(true);
+            is_only_char.push(1);
         } else {
             max_suffix_length.push(0);
             min_length.push(1);
-            is_only_char.push(false);
+            is_only_char.push(0);
         }
     }
 
