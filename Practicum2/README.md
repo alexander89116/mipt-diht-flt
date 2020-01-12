@@ -4,6 +4,24 @@
 
 Построить анализатор для грамматик с помощью [алгоритма Эрли.](https://github.com/alexander89116/flt_mipt/blob/master/Practicum2/earley.h)
 
+## Запуск анализатора
+
+Собираем анализатор
+```
+g++ main.cpp -o analyzer
+```
+Далее на вход подаём грамматику со стартовым символом 'A' и слово в таком формате:
+```
+6
+A-Aa
+D-cD
+A-AAb
+A-C
+C-Dd
+D-
+cdcdcccdbbaaa
+```
+
 ## [Запуск тестов](https://github.com/alexander89116/flt_mipt/blob/master/Practicum2/run_tests.sh)
 ```
 bash run_tests.sh
