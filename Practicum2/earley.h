@@ -41,6 +41,7 @@ namespace NEarley {
         if (j < 0) return;
 
         for (auto &situation : d[j]) {
+            if (situation.DotPosition >= situation.Rule.To.length()) continue;
             if (situation.Rule.To[situation.DotPosition] == w[j]) {
                 d[j + 1].insert({ situation.Rule, situation.DotPosition + 1, situation.Num });
             }
@@ -66,6 +67,7 @@ namespace NEarley {
     void Predict(std::vector<TRule> &grammar, std::vector<std::set<TSituation>> &d, int j) {
         std::vector<TSituation> new_sit;
         for (auto &situation: d[j]) {
+            if (situation.DotPosition >= situation.Rule.To.length()) continue;
             for (auto &rule: grammar) {
                 if (rule.From == situation.Rule.To[situation.DotPosition]) {
                     new_sit.push_back({ rule, 0, j });
