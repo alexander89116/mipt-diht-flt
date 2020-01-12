@@ -48,35 +48,32 @@ namespace NEarley {
         }
     }
 
-    void Complete(std::vector<std::set<TSituation>> &d, int j) {
-        std::vector<TSituation> new_sit;
-        for (auto &competed_sit: d[j]) {
+    void Complete(std::vector<std::set<TSituation>> &d, std::set<TSituation> &situations, std::set<TSituation> &new_sit, int j) {
+        for (auto &competed_sit: situations) {
             if (competed_sit.DotPosition != competed_sit.Rule.To.length()) continue;
             for (auto &situation: d[competed_sit.Num]) {
                 if (situation.Rule.To[situation.DotPosition] == competed_sit.Rule.From) {
-                    new_sit.push_back({ situation.Rule, situation.DotPosition + 1, situation.Num });
+                    TSituation sit = { situation.Rule, situation.DotPosition + 1, situation.Num };
+                    if (d[j].count(sit) == 0) {
+                        new_sit.insert(sit);
+                    }
                 }
             }
-        }
-
-        for (auto sit: new_sit) {
-            d[j].insert(sit);
         }
     }
 
-    void Predict(std::vector<TRule> &grammar, std::vector<std::set<TSituation>> &d, int j) {
-        std::vector<TSituation> new_sit;
-        for (auto &situation: d[j]) {
+    void Predict(std::vector<TRule> &grammar, std::vector<std::set<TSituation>> &d, std::set<TSituation> &situations,
+                 std::set<TSituation> &new_sit, int j) {
+        for (auto &situation: situations) {
             if (situation.DotPosition >= situation.Rule.To.length()) continue;
             for (auto &rule: grammar) {
                 if (rule.From == situation.Rule.To[situation.DotPosition]) {
-                    new_sit.push_back({ rule, 0, j });
+                    TSituation sit = { rule, 0, j };
+                    if (d[j].count(sit) == 0) {
+                        new_sit.insert(sit);
+                    }
                 }
             }
-        }
-
-        for (auto sit: new_sit) {
-            d[j].insert(sit);
         }
     }
 
@@ -85,13 +82,26 @@ namespace NEarley {
         D.resize(w.length() + 1);
         D[0].insert({ { 'S', "A" }, 0, 0 });
         int sz;
+        std::set<TSituation> new_sit;
         for (int j = 0; j <= w.length(); j++) {
             Scan(D, w, j - 1);
-            do {
-                sz = D[j].size();
-                Complete(D, j);
-                Predict(grammar, D, j);
-            } while (sz != D[j].size());
+            new_sit.clear();
+            Complete(D, D[j], new_sit, j);
+            Predict(grammar, D, D[j], new_sit, j);
+            std::set<TSituation> prev_new_sit;
+            while(new_sit.size() != 0) {
+                for (auto& sit: new_sit) {
+                    D[j].insert(sit);
+                    prev_new_sit.insert(sit);
+                }
+                new_sit.clear();
+                Complete(D, prev_new_sit, new_sit, j);
+                Predict(grammar, D, prev_new_sit, new_sit, j);
+                prev_new_sit = new_sit;
+            }
+            for (auto& sit: prev_new_sit) {
+                D[j].insert(sit);
+            }
         }
         return D[w.length()].find({ { 'S', "A" }, 1, 0 }) != D[w.length()].end();
     }
